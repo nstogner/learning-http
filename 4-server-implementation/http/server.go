@@ -68,9 +68,7 @@ func (rw *ResponseWriter) sendHeaders() error {
 		}
 	}
 
-	if _, err := rw.conn.Write([]byte(crlf)); err != nil {
-		return err
-	}
+	// TODO: Content-Length
 
 	return nil
 }
@@ -169,6 +167,8 @@ func readRequest(r io.Reader) (*Request, error) {
 
 	// Keep alive
 	req.keepalive = shouldKeepAlive(req.Proto, req.Headers["connection"])
+
+	// TODO: Read body
 
 	return &req, nil
 }
