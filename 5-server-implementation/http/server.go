@@ -130,7 +130,8 @@ type httpConn struct {
 }
 
 func (hc *httpConn) handle() {
-	req, err := readRequest(hc.netConn)
+	br := bufio.NewReader(hc.netConn)
+	req, err := readRequest(br)
 	if err != nil {
 		// TODO: Send bad req
 		return
@@ -156,12 +157,10 @@ func (hc *httpConn) handle() {
 	}
 }
 
-func readRequest(r io.Reader) (*Request, error) {
+func readRequest(br *bufio.Reader) (*Request, error) {
 	req := Request{
 		Headers: make(map[string]string),
 	}
-
-	br := bufio.NewReader(r)
 
 	// First line
 	if ln0, err := readHTTPLine(br); err == nil {
@@ -220,7 +219,7 @@ func parseRequestLine(ln string) (method, path, proto string, ok bool) {
 }
 
 func parseHeaderLine(ln string) (key, val string, ok bool) {
-	s := strings.Split(ln, ":")
+	s := strings.SplitN(ln, ":", 2)
 	if len(s) != 2 {
 		return
 	}

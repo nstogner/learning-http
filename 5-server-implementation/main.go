@@ -5,6 +5,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"time"
 
 	"github.com/nstogner/learning-http/5-server-implementation/http"
 )
@@ -29,4 +30,5 @@ func (h handler) ServeHTTP(w *http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(os.Stderr).Encode(r)
 	log.Println("serving http")
 	//	w.Write([]byte("hey"))
+	time.Sleep(5 * time.Second)
 }
