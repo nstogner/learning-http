@@ -51,27 +51,17 @@ func (rw *ResponseWriter) sendHeaders() error {
 		return fmt.Errorf("unsupported status code: %v", rw.Status)
 	}
 
-	// https://www.w3.org/Protocols/rfc2616/rfc2616-sec6.html
-	statusline := fmt.Sprintf("%s %v %s"+crlf, rw.proto, rw.Status, statusText)
-	if _, err := rw.conn.Write([]byte(statusline)); err != nil {
-		return err
-	}
-
-	dateline := "Date: " + time.Now().UTC().Format("Mon, 02 Jan 2006 15:04:05 GMT") + crlf
-	if _, err := rw.conn.Write([]byte(dateline)); err != nil {
-		return err
-	}
-
 	rw.Headers["Content-Length"] = strconv.Itoa(rw.buf.Len())
 
+	// https://www.w3.org/Protocols/rfc2616/rfc2616-sec6.html
+	headers := fmt.Sprintf("%s %v %s\r\n", rw.proto, rw.Status, statusText)
+	headers += fmt.Sprintf("Date: %s\r\n", time.Now().UTC().Format("Mon, 02 Jan 2006 15:04:05 GMT"))
 	for k, v := range rw.Headers {
-		line := fmt.Sprintf("%s: %s", k, v)
-		if _, err := rw.conn.Write([]byte(line + crlf)); err != nil {
-			return err
-		}
+		headers += fmt.Sprintf("%s: %s\r\n", k, v)
 	}
+	headers += "\r\n"
 
-	if _, err := rw.conn.Write([]byte(crlf)); err != nil {
+	if _, err := rw.conn.Write([]byte(headers)); err != nil {
 		return err
 	}
 
@@ -234,8 +224,6 @@ func readHTTPLine(br *bufio.Reader) (string, error) {
 	}
 	return strings.TrimSuffix(ln, "\r\n"), nil
 }
-
-const crlf = "\r\n"
 
 var statusTitles = map[int]string{
 	200: "OK",
