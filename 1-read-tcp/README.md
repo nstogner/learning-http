@@ -3,6 +3,11 @@
 This simple server listens for TCP connections and logs anything that is sent to it before closing the connection to the client.
 
 ```sh
+go run ./1-read-tcp/main.go
+```
+
+```sh
+# In another shell
 telnet localhost 7000
 Hey there server!<enter>
 ```

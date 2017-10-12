@@ -31,11 +31,13 @@ func serve(c net.Conn) {
 
 	r := bufio.NewReader(c)
 
-	ln, err := r.ReadString('\n')
-	if err != nil {
-		log.Println("unable to read from conn:", err)
-		return
-	}
+	for {
+		ln, err := r.ReadString('\n')
+		if err != nil {
+			log.Println("unable to read from conn:", err)
+			break
+		}
 
-	log.Printf("read line: %q", ln)
+		log.Printf("read line: %q", ln)
+	}
 }

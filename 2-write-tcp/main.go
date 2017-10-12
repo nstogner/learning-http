@@ -33,14 +33,16 @@ func serve(c net.Conn) {
 
 	r := bufio.NewReader(c)
 
-	ln, err := r.ReadString('\n')
-	if err != nil {
-		log.Println("unable to read from conn:", err)
-		return
-	}
+	for {
+		ln, err := r.ReadString('\n')
+		if err != nil {
+			log.Println("unable to read from conn:", err)
+			break
+		}
 
-	cmd := strings.TrimSuffix(ln, "\r\n")
-	handle(c, cmd)
+		cmd := strings.TrimSuffix(ln, "\r\n")
+		handle(c, cmd)
+	}
 }
 
 func handle(c net.Conn, cmd string) {
