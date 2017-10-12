@@ -17,10 +17,12 @@ const (
 	http11 = "HTTP/1.1"
 )
 
+// Handler responds to and HTTP request.
 type Handler interface {
 	ServeHTTP(*ResponseWriter, *Request)
 }
 
+// ResponseWriter is used to construct and HTTP response.
 type ResponseWriter struct {
 	Status  int
 	Headers map[string]string
@@ -29,12 +31,15 @@ type ResponseWriter struct {
 	buf bytes.Buffer
 }
 
+// Write writes data to a buffer which is later flushed to the network
+// connection.
 func (rw *ResponseWriter) Write(b []byte) (int, error) {
 	return rw.buf.Write(b)
 }
 
-func (rw *ResponseWriter) send(w io.Writer) error {
-	if err := rw.sendHeaders(w); err != nil {
+// writeTo writes an HTTP response with headers and buffered body to a writer.
+func (rw *ResponseWriter) writeTo(w io.Writer) error {
+	if err := rw.writeHeadersTo(w); err != nil {
 		return err
 	}
 	if _, err := rw.buf.WriteTo(w); err != nil {
@@ -43,17 +48,18 @@ func (rw *ResponseWriter) send(w io.Writer) error {
 	return nil
 }
 
-func (rw *ResponseWriter) sendHeaders(w io.Writer) error {
+// writeHeadersTo writes HTTP headers to a writer.
+func (rw *ResponseWriter) writeHeadersTo(w io.Writer) error {
 	statusText, ok := statusTitles[rw.Status]
 	if !ok {
 		return fmt.Errorf("unsupported status code: %v", rw.Status)
 	}
 
+	rw.Headers["Date"] = time.Now().UTC().Format("Mon, 02 Jan 2006 15:04:05 GMT")
 	rw.Headers["Content-Length"] = strconv.Itoa(rw.buf.Len())
 
 	// https://www.w3.org/Protocols/rfc2616/rfc2616-sec6.html
 	headers := fmt.Sprintf("%s %v %s\r\n", rw.Proto, rw.Status, statusText)
-	headers += fmt.Sprintf("Date: %s\r\n", time.Now().UTC().Format("Mon, 02 Jan 2006 15:04:05 GMT"))
 	for k, v := range rw.Headers {
 		headers += fmt.Sprintf("%s: %s\r\n", k, v)
 	}
@@ -66,6 +72,7 @@ func (rw *ResponseWriter) sendHeaders(w io.Writer) error {
 	return nil
 }
 
+// Request represents a HTTP request sent to a server.
 type Request struct {
 	Method  string
 	Path    string
@@ -77,6 +84,7 @@ type Request struct {
 	body          io.Reader
 }
 
+// Read reads the request body from the network connection.
 func (r *Request) Read(b []byte) (int, error) {
 	if r.contentlength == 0 {
 		return 0, io.EOF
@@ -91,10 +99,12 @@ func (r *Request) Read(b []byte) (int, error) {
 	return n, nil
 }
 
+// Server wraps a Handler and manages a network listener.
 type Server struct {
 	Handler Handler
 }
 
+// Serve accepts incoming HTTP connections from a listener.
 func (s *Server) Serve(l net.Listener) error {
 	defer l.Close()
 
@@ -110,11 +120,14 @@ func (s *Server) Serve(l net.Listener) error {
 	return nil
 }
 
+// httpConn handles persistent HTTP connections.
 type httpConn struct {
 	netConn net.Conn
 	handler Handler
 }
 
+// handle reads and responds to one or many HTTP requests off of a single TCP
+// connection.
 func (hc *httpConn) handle() {
 	defer hc.netConn.Close()
 
@@ -135,7 +148,7 @@ func (hc *httpConn) handle() {
 
 		hc.handler.ServeHTTP(res, req)
 
-		if err := res.send(hc.netConn); err != nil {
+		if err := res.writeTo(hc.netConn); err != nil {
 			req.keepalive = false
 		}
 
@@ -145,6 +158,7 @@ func (hc *httpConn) handle() {
 	}
 }
 
+// readRequest generates a Request object by parsing text from a bufio.Reader.
 func readRequest(br *bufio.Reader) (*Request, error) {
 	req := Request{
 		Headers: make(map[string]string),
@@ -183,6 +197,8 @@ func readRequest(br *bufio.Reader) (*Request, error) {
 	return &req, nil
 }
 
+// shouldKeepAlive determines whether a connection should be kept alive or
+// closed based on the protocol version and "Connection" header.
 func shouldKeepAlive(proto, connHeader string) bool {
 	switch proto {
 	case http10:
@@ -198,6 +214,7 @@ func shouldKeepAlive(proto, connHeader string) bool {
 	}
 }
 
+// parseRequestLine attempts to parse the initial line of an HTTP request.
 func parseRequestLine(ln string) (method, path, proto string, ok bool) {
 	s := strings.Split(ln, " ")
 	if len(s) != 3 {
@@ -206,6 +223,8 @@ func parseRequestLine(ln string) (method, path, proto string, ok bool) {
 	return s[0], s[1], s[2], true
 }
 
+// parseHeaderLine attempts to parse a standard HTTP header, e.g.
+// "Content-Type: application/json".
 func parseHeaderLine(ln string) (key, val string, ok bool) {
 	s := strings.SplitN(ln, ":", 2)
 	if len(s) != 2 {
@@ -214,6 +233,7 @@ func parseHeaderLine(ln string) (key, val string, ok bool) {
 	return strings.ToLower(s[0]), strings.TrimSpace(s[1]), true
 }
 
+// readHTTPLine reads up to a newline feed and strips off the trailing crlf.
 func readHTTPLine(br *bufio.Reader) (string, error) {
 	ln, err := br.ReadString('\n')
 	if err != nil {
@@ -222,6 +242,8 @@ func readHTTPLine(br *bufio.Reader) (string, error) {
 	return strings.TrimSuffix(ln, "\r\n"), nil
 }
 
+// statusTitles map HTTP status codes to their titles. This is handy for
+// sending the response header.
 var statusTitles = map[int]string{
 	200: "OK",
 	201: "Created",
