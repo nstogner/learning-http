@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -61,6 +62,10 @@ func (rw *ResponseWriter) sendHeaders() error {
 		return err
 	}
 
+	if cl := rw.buf.Len(); cl > 0 {
+		rw.Headers["Content-Length"] = strconv.Itoa(cl)
+	}
+
 	for k, v := range rw.Headers {
 		line := fmt.Sprintf("%s: %s", k, v)
 		if _, err := rw.conn.Write([]byte(line + crlf)); err != nil {
@@ -68,7 +73,9 @@ func (rw *ResponseWriter) sendHeaders() error {
 		}
 	}
 
-	// TODO: Content-Length
+	if _, err := rw.conn.Write([]byte(crlf)); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -79,11 +86,26 @@ type Request struct {
 	Proto   string
 	Headers map[string]string
 
-	keepalive bool
+	body          io.Reader
+	keepalive     bool
+	contentlength int
+}
+
+func (r *Request) Read(b []byte) (int, error) {
+	if r.contentlength == 0 {
+		return 0, io.EOF
+	}
+	n, err := r.body.Read(b)
+	if err != nil {
+		return n, err
+	}
+	if n >= r.contentlength {
+		return n, io.EOF
+	}
+	return n, nil
 }
 
 type Server struct {
-	Addr    string
 	Handler Handler
 }
 
@@ -165,10 +187,11 @@ func readRequest(r io.Reader) (*Request, error) {
 		}
 	}
 
+	req.contentlength, _ = strconv.Atoi(req.Headers["content-length"])
+	req.body = br
+
 	// Keep alive
 	req.keepalive = shouldKeepAlive(req.Proto, req.Headers["connection"])
-
-	// TODO: Read body
 
 	return &req, nil
 }
