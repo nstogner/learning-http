@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/nstogner/learning-http/4-server-implementation/http"
+	"github.com/nstogner/learning-http/5-server-implementation/http"
 )
 
 func main() {

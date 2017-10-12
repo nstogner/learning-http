@@ -3,7 +3,7 @@
 This simple server listens for TCP connections and logs anything that is sent to it before closing the connection to the client.
 
 ```sh
-go run ./1-read-tcp/main.go
+go run ./1-tcp-logger/main.go
 ```
 
 ```sh
