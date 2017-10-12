@@ -24,28 +24,26 @@ type Handler interface {
 type ResponseWriter struct {
 	Status  int
 	Headers map[string]string
+	Proto   string
 
-	proto string
-
-	buf  bytes.Buffer
-	conn net.Conn
+	buf bytes.Buffer
 }
 
 func (rw *ResponseWriter) Write(b []byte) (int, error) {
 	return rw.buf.Write(b)
 }
 
-func (rw *ResponseWriter) send() error {
-	if err := rw.sendHeaders(); err != nil {
+func (rw *ResponseWriter) send(w io.Writer) error {
+	if err := rw.sendHeaders(w); err != nil {
 		return err
 	}
-	if _, err := rw.buf.WriteTo(rw.conn); err != nil {
+	if _, err := rw.buf.WriteTo(w); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (rw *ResponseWriter) sendHeaders() error {
+func (rw *ResponseWriter) sendHeaders(w io.Writer) error {
 	statusText, ok := statusTitles[rw.Status]
 	if !ok {
 		return fmt.Errorf("unsupported status code: %v", rw.Status)
@@ -54,14 +52,14 @@ func (rw *ResponseWriter) sendHeaders() error {
 	rw.Headers["Content-Length"] = strconv.Itoa(rw.buf.Len())
 
 	// https://www.w3.org/Protocols/rfc2616/rfc2616-sec6.html
-	headers := fmt.Sprintf("%s %v %s\r\n", rw.proto, rw.Status, statusText)
+	headers := fmt.Sprintf("%s %v %s\r\n", rw.Proto, rw.Status, statusText)
 	headers += fmt.Sprintf("Date: %s\r\n", time.Now().UTC().Format("Mon, 02 Jan 2006 15:04:05 GMT"))
 	for k, v := range rw.Headers {
 		headers += fmt.Sprintf("%s: %s\r\n", k, v)
 	}
 	headers += "\r\n"
 
-	if _, err := rw.conn.Write([]byte(headers)); err != nil {
+	if _, err := w.Write([]byte(headers)); err != nil {
 		return err
 	}
 
@@ -74,9 +72,9 @@ type Request struct {
 	Proto   string
 	Headers map[string]string
 
-	body          io.Reader
-	keepalive     bool
 	contentlength int
+	keepalive     bool
+	body          io.Reader
 }
 
 func (r *Request) Read(b []byte) (int, error) {
@@ -132,13 +130,12 @@ func (hc *httpConn) handle() {
 		res := &ResponseWriter{
 			Status:  200,
 			Headers: make(map[string]string),
-			proto:   req.Proto,
-			conn:    hc.netConn,
+			Proto:   req.Proto,
 		}
 
 		hc.handler.ServeHTTP(res, req)
 
-		if err := res.send(); err != nil {
+		if err := res.send(hc.netConn); err != nil {
 			req.keepalive = false
 		}
 
