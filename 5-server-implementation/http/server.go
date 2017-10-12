@@ -62,9 +62,7 @@ func (rw *ResponseWriter) sendHeaders() error {
 		return err
 	}
 
-	if cl := rw.buf.Len(); cl > 0 {
-		rw.Headers["Content-Length"] = strconv.Itoa(cl)
-	}
+	rw.Headers["Content-Length"] = strconv.Itoa(rw.buf.Len())
 
 	for k, v := range rw.Headers {
 		line := fmt.Sprintf("%s: %s", k, v)
