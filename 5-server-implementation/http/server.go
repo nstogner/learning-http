@@ -130,30 +130,33 @@ type httpConn struct {
 }
 
 func (hc *httpConn) handle() {
+	defer hc.netConn.Close()
+
 	br := bufio.NewReader(hc.netConn)
-	req, err := readRequest(br)
-	if err != nil {
-		// TODO: Send bad req
-		return
-	}
-	defer func() {
-		if req.keepalive {
-			hc.handle()
-		} else {
-			hc.netConn.Close()
+
+	for {
+		req, err := readRequest(br)
+		if err != nil {
+			// TODO: Send bad req
+			break
 		}
-	}()
 
-	res := &ResponseWriter{
-		Status:  200,
-		Headers: make(map[string]string),
-		proto:   req.Proto,
-		conn:    hc.netConn,
-	}
+		res := &ResponseWriter{
+			Status:  200,
+			Headers: make(map[string]string),
+			proto:   req.Proto,
+			conn:    hc.netConn,
+		}
 
-	hc.handler.ServeHTTP(res, req)
-	if err := res.send(); err != nil {
-		req.keepalive = false
+		hc.handler.ServeHTTP(res, req)
+
+		if err := res.send(); err != nil {
+			req.keepalive = false
+		}
+
+		if !req.keepalive {
+			break
+		}
 	}
 }
 
