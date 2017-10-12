@@ -1,7 +1,7 @@
 package main
 
 import (
-	"bytes"
+	"bufio"
 	"log"
 	"net"
 )
@@ -22,23 +22,20 @@ func main() {
 			break
 		}
 
-		go serve(conn)
+		serve(conn)
 	}
 }
 
 func serve(c net.Conn) {
 	defer c.Close()
-	for {
-		btys := make([]byte, 30)
-		n, err := c.Read(btys)
-		if err != nil {
-			break
-		}
-		log.Printf("read %v bytes: %q", n, string(btys))
 
-		if bytes.Contains(btys, []byte("C")) {
-			log.Print("read 'C': closing connection")
-			break
-		}
+	r := bufio.NewReader(c)
+
+	ln, err := r.ReadString('\n')
+	if err != nil {
+		log.Println("unable to read from conn:", err)
+		return
 	}
+
+	log.Printf("read line: %q", ln)
 }
