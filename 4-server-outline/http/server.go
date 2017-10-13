@@ -21,7 +21,7 @@ func (rw *ResponseWriter) Write(b []byte) (int, error) {
 
 type Request struct {
 	Method  string
-	Path    string
+	URI     string
 	Proto   string
 	Headers map[string]string
 

@@ -74,7 +74,7 @@ func (rw *ResponseWriter) writeHeadersTo(w io.Writer) error {
 // Request represents a HTTP request sent to a server.
 type Request struct {
 	Method  string
-	Path    string
+	URI     string
 	Proto   string
 	Headers map[string]string
 
@@ -152,7 +152,7 @@ func readRequest(r *bufio.Reader) (*Request, error) {
 	// First line
 	if ln0, err := readHTTPLine(r); err == nil {
 		var ok bool
-		if req.Method, req.Path, req.Proto, ok = parseRequestLine(ln0); !ok {
+		if req.Method, req.URI, req.Proto, ok = parseRequestLine(ln0); !ok {
 			return nil, fmt.Errorf("malformed request line: %q", ln0)
 		}
 	}
@@ -201,7 +201,7 @@ func shouldKeepAlive(proto, connHeader string) bool {
 }
 
 // parseRequestLine attempts to parse the initial line of an HTTP request.
-func parseRequestLine(ln string) (method, path, proto string, ok bool) {
+func parseRequestLine(ln string) (method, uri, proto string, ok bool) {
 	s := strings.Split(ln, " ")
 	if len(s) != 3 {
 		return
