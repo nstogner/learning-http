@@ -3,7 +3,6 @@ package http
 import (
 	"bufio"
 	"bytes"
-	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -79,24 +78,9 @@ type Request struct {
 	Proto   string
 	Headers map[string]string
 
-	contentlength int
-	keepalive     bool
-	body          io.Reader
-}
+	Body io.Reader
 
-// Read reads the request body from the network connection.
-func (r *Request) Read(b []byte) (int, error) {
-	if r.contentlength == 0 {
-		return 0, io.EOF
-	}
-	n, err := r.body.Read(b)
-	if err != nil {
-		return n, err
-	}
-	if n >= r.contentlength {
-		return n, io.EOF
-	}
-	return n, nil
+	keepalive bool
 }
 
 // Server wraps a Handler and manages a network listener.
@@ -136,7 +120,8 @@ func (hc *httpConn) handle() {
 	for {
 		req, err := readRequest(br)
 		if err != nil {
-			// TODO: Send bad req
+			const bad = "HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n"
+			hc.netConn.Write([]byte(bad))
 			break
 		}
 
@@ -149,7 +134,7 @@ func (hc *httpConn) handle() {
 		hc.handler.ServeHTTP(res, req)
 
 		if err := res.writeTo(hc.netConn); err != nil {
-			req.keepalive = false
+			break
 		}
 
 		if !req.keepalive {
@@ -159,22 +144,22 @@ func (hc *httpConn) handle() {
 }
 
 // readRequest generates a Request object by parsing text from a bufio.Reader.
-func readRequest(br *bufio.Reader) (*Request, error) {
+func readRequest(r *bufio.Reader) (*Request, error) {
 	req := Request{
 		Headers: make(map[string]string),
 	}
 
 	// First line
-	if ln0, err := readHTTPLine(br); err == nil {
+	if ln0, err := readHTTPLine(r); err == nil {
 		var ok bool
 		if req.Method, req.Path, req.Proto, ok = parseRequestLine(ln0); !ok {
-			return nil, errors.New("malformed request")
+			return nil, fmt.Errorf("malformed request line: %q", ln0)
 		}
 	}
 
 	// Headers
 	for {
-		ln, err := readHTTPLine(br)
+		ln, err := readHTTPLine(r)
 		if err != nil {
 			return nil, err
 		}
@@ -188,10 +173,11 @@ func readRequest(br *bufio.Reader) (*Request, error) {
 		}
 	}
 
-	req.contentlength, _ = strconv.Atoi(req.Headers["content-length"])
-	req.body = br
+	// Limit the body to the number of bytes specified by Content-Length
+	cl, _ := strconv.ParseInt(req.Headers["content-length"], 10, 64)
+	req.Body = &io.LimitedReader{R: r, N: cl}
 
-	// Keep alive
+	// Determine if connection should be closed after request
 	req.keepalive = shouldKeepAlive(req.Proto, req.Headers["connection"])
 
 	return &req, nil

@@ -1,12 +1,9 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net"
-	"os"
 
 	"github.com/nstogner/learning-http/5-server-implementation/http"
 )
@@ -29,10 +26,9 @@ type handler struct{}
 
 func (h handler) ServeHTTP(w *http.ResponseWriter, r *http.Request) {
 	log.Println("serving http")
-	json.NewEncoder(os.Stderr).Encode(r)
 
-	btys, _ := ioutil.ReadAll(r)
-	fmt.Printf("read request body: %q\n", string(btys))
+	btys, _ := ioutil.ReadAll(r.Body)
+	log.Printf("read request body: %q\n", string(btys))
 
-	w.Write([]byte("hey"))
+	w.Write([]byte("howdy"))
 }
