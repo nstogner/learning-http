@@ -25,9 +25,9 @@ type Handler interface {
 type ResponseWriter struct {
 	Status  int
 	Headers map[string]string
-	Proto   string
 
-	buf bytes.Buffer
+	proto string
+	buf   bytes.Buffer
 }
 
 // Write writes data to a buffer which is later flushed to the network
@@ -58,7 +58,7 @@ func (rw *ResponseWriter) writeHeadersTo(w io.Writer) error {
 	rw.Headers["Content-Length"] = strconv.Itoa(rw.buf.Len())
 
 	// https://www.w3.org/Protocols/rfc2616/rfc2616-sec6.html
-	headers := fmt.Sprintf("%s %v %s\r\n", rw.Proto, rw.Status, statusText)
+	headers := fmt.Sprintf("%s %v %s\r\n", rw.proto, rw.Status, statusText)
 	for k, v := range rw.Headers {
 		headers += fmt.Sprintf("%s: %s\r\n", k, v)
 	}
@@ -128,7 +128,7 @@ func (hc *httpConn) handle() {
 		res := &ResponseWriter{
 			Status:  200,
 			Headers: make(map[string]string),
-			Proto:   req.Proto,
+			proto:   req.Proto,
 		}
 
 		hc.handler.ServeHTTP(res, req)

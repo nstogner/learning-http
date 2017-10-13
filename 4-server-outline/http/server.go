@@ -1,6 +1,8 @@
 package http
 
 import (
+	"bufio"
+	"bytes"
 	"io"
 	"net"
 )
@@ -12,6 +14,10 @@ type Handler interface {
 type ResponseWriter struct {
 	Status  int
 	Headers map[string]string
+
+	// We know we need a buffer because we need to know what the Content-Length
+	// header should be before we can write the body to the connection
+	buf bytes.Buffer
 }
 
 func (rw *ResponseWriter) Write(b []byte) (int, error) {
@@ -20,16 +26,20 @@ func (rw *ResponseWriter) Write(b []byte) (int, error) {
 }
 
 type Request struct {
+	// Parsed out header fields
 	Method  string
 	URI     string
 	Proto   string
 	Headers map[string]string
 
+	// A way to read bytes from the body
+	Body io.Reader
+
+	// Should the connection be terminated after the response is sent?
 	keepalive bool
 }
 
 type Server struct {
-	Addr    string
 	Handler Handler
 }
 
@@ -54,17 +64,24 @@ type httpConn struct {
 }
 
 func (hc *httpConn) handle() {
-	req, err := readRequest(hc.netConn)
-	if err != nil {
-		// TODO: Send bad request
-	}
+	br := bufio.NewReader(hc.netConn)
 
-	res := &ResponseWriter{}
+	for {
+		req, err := readRequest(br)
+		if err != nil {
+			// TODO: Send bad request
+			break
+		}
 
-	hc.handler.ServeHTTP(res, req)
+		res := &ResponseWriter{}
 
-	if req.keepalive {
-		hc.handle()
+		hc.handler.ServeHTTP(res, req)
+
+		// TODO: Send response back
+
+		if !req.keepalive {
+			break
+		}
 	}
 }
 
@@ -76,6 +93,8 @@ func readRequest(r io.Reader) (*Request, error) {
 	for {
 		// TODO: Parse headers
 	}
+
+	// TODO: Assign body reader
 
 	return &req, nil
 }
