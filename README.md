@@ -10,7 +10,9 @@ Understanding one step below the abstraction level where you operate is extremel
 
 ## Additional Topics
 
-A. Pipelining
-B. Chucked Transfer Encoding
-C. HTTP 2.0
+### A. Pipelining
+
+### B. Chucked Transfer Encoding
+
+### C. HTTP 2.0
 
