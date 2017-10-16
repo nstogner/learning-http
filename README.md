@@ -6,11 +6,11 @@ Understanding one step below the abstraction level where you operate is extremel
 2. [Two-Way TCP](2-two-way-tcp/README.md) - Create a protocol for talking back-in-forth over TCP
 3. [Minimal HTTP](3-mvp-http/README.md) - The bare bones of responding to a HTTP request
 4. [HTTP Server Outline](4-http-server-outline/README.md) - Scaffolding out our own HTTP package
-5. [HTTP Server Implementation](4-http-server-implementation/README.md) - A working HTTP server
+5. [HTTP Server Implementation](5-http-server-implementation/README.md) - A working HTTP server
 
-Additional Topics
+## Additional Topics
 
-## A. Pipelining
-## B. Chucked Transfer Encoding
-## C. HTTP 2.0
+A. Pipelining
+B. Chucked Transfer Encoding
+C. HTTP 2.0
 
