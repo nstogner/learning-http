@@ -100,7 +100,7 @@ func (s *Server) Serve(l net.Listener) error {
 
 		hc := httpConn{nc, s.Handler}
 		// Spawn off a goroutine so we can accept other connections
-		go hc.handle()
+		go hc.serve()
 	}
 	return nil
 }
@@ -111,9 +111,9 @@ type httpConn struct {
 	handler Handler
 }
 
-// handle reads and responds to one or many HTTP requests off of a single TCP
+// serve reads and responds to one or many HTTP requests off of a single TCP
 // connection.
-func (hc *httpConn) handle() {
+func (hc *httpConn) serve() {
 	defer hc.netConn.Close()
 
 	br := bufio.NewReader(hc.netConn)
