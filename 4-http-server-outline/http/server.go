@@ -43,6 +43,7 @@ type Server struct {
 	Handler Handler
 }
 
+// Serve accepts incoming HTTP connections and handles them in a new goroutine.
 func (s *Server) Serve(l net.Listener) error {
 	defer l.Close()
 
@@ -53,7 +54,8 @@ func (s *Server) Serve(l net.Listener) error {
 		}
 
 		hc := httpConn{nc, s.Handler}
-		go hc.handle()
+		// Spawn off a goroutine so we can accept other connections
+		go hc.serve()
 	}
 	return nil
 }
@@ -63,7 +65,8 @@ type httpConn struct {
 	handler Handler
 }
 
-func (hc *httpConn) handle() {
+// serve manages reading and writing to a connection.
+func (hc *httpConn) serve() {
 	br := bufio.NewReader(hc.netConn)
 
 	for {

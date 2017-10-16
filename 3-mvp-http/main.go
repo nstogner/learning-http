@@ -18,7 +18,7 @@ func main() {
 	for {
 		conn, err := l.Accept()
 		if err != nil {
-			log.Println("unable to accept")
+			log.Print("unable to accept")
 			break
 		}
 
@@ -26,12 +26,14 @@ func main() {
 	}
 }
 
+// serve manages reading and writing to a connection.
 func serve(c net.Conn) {
 	defer c.Close()
 
 	r := bufio.NewReader(c)
 
 	// Read request line
+	// e.g. "GET /abc HTTP/1.1"
 	ln0, err := r.ReadString('\n')
 	if err != nil {
 		return
@@ -39,6 +41,7 @@ func serve(c net.Conn) {
 	log.Printf("read request line: %q", ln0)
 
 	// Read headers
+	// e.g. "Content-Type: application/json"
 	for {
 		ln, err := r.ReadString('\n')
 		if err != nil {
@@ -54,7 +57,7 @@ func serve(c net.Conn) {
 		log.Printf("read request header: %q", ln)
 	}
 
-	// Ignore body
+	// Ignore the request body for now
 
 	// Write response
 	c.Write([]byte("HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n"))

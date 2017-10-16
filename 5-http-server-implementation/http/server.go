@@ -16,12 +16,12 @@ const (
 	http11 = "HTTP/1.1"
 )
 
-// Handler responds to and HTTP request.
+// Handler responds to a HTTP request.
 type Handler interface {
 	ServeHTTP(*ResponseWriter, *Request)
 }
 
-// ResponseWriter is used to construct and HTTP response.
+// ResponseWriter is used to construct a HTTP response.
 type ResponseWriter struct {
 	Status  int
 	Headers map[string]string
@@ -88,7 +88,7 @@ type Server struct {
 	Handler Handler
 }
 
-// Serve accepts incoming HTTP connections from a listener.
+// Serve accepts incoming HTTP connections and handles them in a new goroutine.
 func (s *Server) Serve(l net.Listener) error {
 	defer l.Close()
 
@@ -99,6 +99,7 @@ func (s *Server) Serve(l net.Listener) error {
 		}
 
 		hc := httpConn{nc, s.Handler}
+		// Spawn off a goroutine so we can accept other connections
 		go hc.handle()
 	}
 	return nil

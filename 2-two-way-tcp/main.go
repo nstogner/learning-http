@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"io"
 	"log"
 	"net"
 	"os"
@@ -18,9 +19,10 @@ func main() {
 	log.Print("listening")
 
 	for {
+		// Accept blocks until there is an incoming connection
 		conn, err := l.Accept()
 		if err != nil {
-			log.Println("unable to accept")
+			log.Print("unable to accept")
 			break
 		}
 
@@ -28,31 +30,40 @@ func main() {
 	}
 }
 
+// serve manages reading and writing to a connection.
 func serve(c net.Conn) {
 	defer c.Close()
 
+	// The bufio Reader provides some nice convenience functions for reading
+	// up until a particular character is found
 	r := bufio.NewReader(c)
 
 	for {
+		// Read up to and including the next newline character
+		// (the second byte of a crlf)
 		ln, err := r.ReadString('\n')
 		if err != nil {
 			log.Println("unable to read from conn:", err)
 			break
 		}
 
+		// NOTE: Telnet will send a crlf when you hit enter so we will strip
+		// that off here
 		cmd := strings.TrimSuffix(ln, "\r\n")
 		handle(c, cmd)
 	}
 }
 
-func handle(c net.Conn, cmd string) {
+// handle accepts a Writer so that it can respond to a given parsed command
+// string.
+func handle(w io.Writer, cmd string) {
 	switch cmd {
 	case "BEEP":
 		log.Print("beeping!")
 		os.Stdout.Write([]byte("\u0007"))
 
-		c.Write([]byte("ACCEPTED\r\n"))
+		w.Write([]byte("ACCEPTED\r\n"))
 	default:
-		c.Write([]byte("REJECTED\r\n"))
+		w.Write([]byte("REJECTED\r\n"))
 	}
 }

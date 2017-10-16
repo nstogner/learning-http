@@ -5,7 +5,7 @@ import (
 	"log"
 	"net"
 
-	"github.com/nstogner/learning-http/5-server-implementation/http"
+	"github.com/nstogner/learning-http/5-http-server-implementation/http"
 )
 
 func main() {
@@ -15,10 +15,10 @@ func main() {
 
 	l, err := net.Listen("tcp", ":7000")
 	if err != nil {
-		panic(err)
+		log.Fatalln("unable to listen:", err)
 	}
 	if err := s.Serve(l); err != nil {
-		panic(err)
+		log.Fatalln("unable to serve:", err)
 	}
 }
 
