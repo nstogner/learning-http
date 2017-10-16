@@ -13,8 +13,18 @@ import (
 
 const (
 	http10 = "HTTP/1.0"
-	http11 = "HTTP/1.1"
 )
+
+// statusTitles map HTTP status codes to their titles. This is handy for
+// sending the response header.
+var statusTitles = map[int]string{
+	200: "OK",
+	201: "Created",
+	202: "Accepted",
+	203: "Non-Authoritative Information",
+	204: "No Content",
+	// TODO: More status codes
+}
 
 // Handler responds to a HTTP request.
 type Handler interface {
@@ -22,6 +32,8 @@ type Handler interface {
 }
 
 // ResponseWriter is used to construct a HTTP response.
+// TODO: Change name b/c it might be confused with the std lib interface
+// (ResponseRecorder?)
 type ResponseWriter struct {
 	Status  int
 	Headers map[string]string
@@ -41,9 +53,11 @@ func (rw *ResponseWriter) writeTo(w io.Writer) error {
 	if err := rw.writeHeadersTo(w); err != nil {
 		return err
 	}
+
 	if _, err := rw.buf.WriteTo(w); err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -83,28 +97,6 @@ type Request struct {
 	keepalive bool
 }
 
-// Server wraps a Handler and manages a network listener.
-type Server struct {
-	Handler Handler
-}
-
-// Serve accepts incoming HTTP connections and handles them in a new goroutine.
-func (s *Server) Serve(l net.Listener) error {
-	defer l.Close()
-
-	for {
-		nc, err := l.Accept()
-		if err != nil {
-			return err
-		}
-
-		hc := httpConn{nc, s.Handler}
-		// Spawn off a goroutine so we can accept other connections
-		go hc.serve()
-	}
-	return nil
-}
-
 // httpConn handles persistent HTTP connections.
 type httpConn struct {
 	netConn net.Conn
@@ -123,44 +115,66 @@ func (hc *httpConn) serve() {
 		if err != nil {
 			const bad = "HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n"
 			hc.netConn.Write([]byte(bad))
-			break
+			return
 		}
 
-		res := &ResponseWriter{
+		res := ResponseWriter{
 			Status:  200,
 			Headers: make(map[string]string),
 			proto:   req.Proto,
 		}
 
-		hc.handler.ServeHTTP(res, req)
+		hc.handler.ServeHTTP(&res, req)
 
 		if err := res.writeTo(hc.netConn); err != nil {
-			break
+			return
 		}
 
 		if !req.keepalive {
-			break
+			return
 		}
 	}
 }
 
+// Server wraps a Handler and manages a network listener.
+type Server struct {
+	Handler Handler
+}
+
+// Serve accepts incoming HTTP connections and handles them in a new goroutine.
+func (s *Server) Serve(l net.Listener) error {
+	defer l.Close()
+
+	for {
+		nc, err := l.Accept()
+		if err != nil {
+			return err
+		}
+
+		hc := httpConn{nc, s.Handler}
+
+		// Spawn off a goroutine so we can accept other connections.
+		go hc.serve()
+	}
+}
+
 // readRequest generates a Request object by parsing text from a bufio.Reader.
-func readRequest(r *bufio.Reader) (*Request, error) {
+func readRequest(buf *bufio.Reader) (*Request, error) {
 	req := Request{
 		Headers: make(map[string]string),
 	}
 
-	// First line
-	if ln0, err := readHTTPLine(r); err == nil {
+	// Read the HTTP request line (first line).
+	if ln0, err := readHTTPLine(buf); err == nil {
 		var ok bool
 		if req.Method, req.URI, req.Proto, ok = parseRequestLine(ln0); !ok {
 			return nil, fmt.Errorf("malformed request line: %q", ln0)
 		}
 	}
 
-	// Headers
+	// Read each subsequent header.
 	for {
-		ln, err := readHTTPLine(r)
+		ln, err := readHTTPLine(buf)
 		if err != nil {
 			return nil, err
 		}
@@ -174,11 +188,17 @@ func readRequest(r *bufio.Reader) (*Request, error) {
 		}
 	}
 
-	// Limit the body to the number of bytes specified by Content-Length
-	cl, _ := strconv.ParseInt(req.Headers["content-length"], 10, 64)
-	req.Body = &io.LimitedReader{R: r, N: cl}
+	// Limit the body to the number of bytes specified by Content-Length.
+	var cl int64
+	if str, ok := req.Headers["content-length"]; ok {
+		var err error
+		if cl, err = strconv.ParseInt(str, 10, 64); err != nil {
+			return nil, err
+		}
+	}
+	req.Body = &io.LimitedReader{R: buf, N: cl}
 
-	// Determine if connection should be closed after request
+	// Determine if connection should be closed after request.
 	req.keepalive = shouldKeepAlive(req.Proto, req.Headers["connection"])
 
 	return &req, nil
@@ -207,6 +227,7 @@ func parseRequestLine(ln string) (method, uri, proto string, ok bool) {
 	if len(s) != 3 {
 		return
 	}
+
 	return s[0], s[1], s[2], true
 }
 
@@ -217,25 +238,16 @@ func parseHeaderLine(ln string) (key, val string, ok bool) {
 	if len(s) != 2 {
 		return
 	}
+
 	return strings.ToLower(s[0]), strings.TrimSpace(s[1]), true
 }
 
 // readHTTPLine reads up to a newline feed and strips off the trailing crlf.
-func readHTTPLine(br *bufio.Reader) (string, error) {
-	ln, err := br.ReadString('\n')
+func readHTTPLine(buf *bufio.Reader) (string, error) {
+	ln, err := buf.ReadString('\n')
 	if err != nil {
 		return "", err
 	}
-	return strings.TrimSuffix(ln, "\r\n"), nil
-}
 
-// statusTitles map HTTP status codes to their titles. This is handy for
-// sending the response header.
-var statusTitles = map[int]string{
-	200: "OK",
-	201: "Created",
-	202: "Accepted",
-	203: "Non-Authoritative Information",
-	204: "No Content",
-	// TODO: More status codes
+	return strings.TrimSuffix(ln, "\r\n"), nil
 }
