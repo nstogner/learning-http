@@ -237,4 +237,5 @@ var statusTitles = map[int]string{
 	202: "Accepted",
 	203: "Non-Authoritative Information",
 	204: "No Content",
+	// TODO: More status codes
 }
