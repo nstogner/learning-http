@@ -28,13 +28,13 @@ var statusTitles = map[int]string{
 
 // Handler responds to a HTTP request.
 type Handler interface {
-	ServeHTTP(*ResponseWriter, *Request)
+	// ServeHTTP takes a Response struct rather than a ResponseWriter interface
+	// like the standard library to keep things simple.
+	ServeHTTP(*Response, *Request)
 }
 
-// ResponseWriter is used to construct a HTTP response.
-// TODO: Change name b/c it might be confused with the std lib interface
-// (ResponseRecorder?)
-type ResponseWriter struct {
+// Response is used to construct a HTTP response.
+type Response struct {
 	Status  int
 	Headers map[string]string
 
@@ -44,17 +44,17 @@ type ResponseWriter struct {
 
 // Write writes data to a buffer which is later flushed to the network
 // connection.
-func (rw *ResponseWriter) Write(b []byte) (int, error) {
-	return rw.buf.Write(b)
+func (res *Response) Write(b []byte) (int, error) {
+	return res.buf.Write(b)
 }
 
 // writeTo writes an HTTP response with headers and buffered body to a writer.
-func (rw *ResponseWriter) writeTo(w io.Writer) error {
-	if err := rw.writeHeadersTo(w); err != nil {
+func (res *Response) writeTo(w io.Writer) error {
+	if err := res.writeHeadersTo(w); err != nil {
 		return err
 	}
 
-	if _, err := rw.buf.WriteTo(w); err != nil {
+	if _, err := res.buf.WriteTo(w); err != nil {
 		return err
 	}
 
@@ -62,18 +62,18 @@ func (rw *ResponseWriter) writeTo(w io.Writer) error {
 }
 
 // writeHeadersTo writes HTTP headers to a writer.
-func (rw *ResponseWriter) writeHeadersTo(w io.Writer) error {
-	statusText, ok := statusTitles[rw.Status]
+func (res *Response) writeHeadersTo(w io.Writer) error {
+	statusText, ok := statusTitles[res.Status]
 	if !ok {
-		return fmt.Errorf("unsupported status code: %v", rw.Status)
+		return fmt.Errorf("unsupported status code: %v", res.Status)
 	}
 
-	rw.Headers["Date"] = time.Now().UTC().Format("Mon, 02 Jan 2006 15:04:05 GMT")
-	rw.Headers["Content-Length"] = strconv.Itoa(rw.buf.Len())
+	res.Headers["Date"] = time.Now().UTC().Format("Mon, 02 Jan 2006 15:04:05 GMT")
+	res.Headers["Content-Length"] = strconv.Itoa(res.buf.Len())
 
 	// https://www.w3.org/Protocols/rfc2616/rfc2616-sec6.html
-	headers := fmt.Sprintf("%s %v %s\r\n", rw.proto, rw.Status, statusText)
-	for k, v := range rw.Headers {
+	headers := fmt.Sprintf("%s %v %s\r\n", res.proto, res.Status, statusText)
+	for k, v := range res.Headers {
 		headers += fmt.Sprintf("%s: %s\r\n", k, v)
 	}
 	headers += "\r\n"
@@ -103,7 +103,7 @@ type httpConn struct {
 	handler Handler
 }
 
-// serve reads and responds to one or many HTTP requests off of a single TCP
+// serve reads and responds to one or many HTTP requests off of a single
 // connection.
 func (hc *httpConn) serve() {
 	defer hc.netConn.Close()
@@ -118,7 +118,7 @@ func (hc *httpConn) serve() {
 			return
 		}
 
-		res := ResponseWriter{
+		res := Response{
 			Status:  200,
 			Headers: make(map[string]string),
 			proto:   req.Proto,

@@ -24,7 +24,7 @@ func main() {
 
 type handler struct{}
 
-func (h handler) ServeHTTP(w *http.ResponseWriter, r *http.Request) {
+func (h handler) ServeHTTP(w *http.Response, r *http.Request) {
 	log.Println("serving http")
 
 	btys, _ := ioutil.ReadAll(r.Body)

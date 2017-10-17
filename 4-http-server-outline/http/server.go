@@ -7,11 +7,15 @@ import (
 	"net"
 )
 
+// Handler responds to a HTTP request.
 type Handler interface {
-	ServeHTTP(*ResponseWriter, *Request)
+	// ServeHTTP takes a Response struct rather than a ResponseWriter interface
+	// like the standard library to keep things simple.
+	ServeHTTP(*Response, *Request)
 }
 
-type ResponseWriter struct {
+// Response is used to construct a HTTP response.
+type Response struct {
 	Status  int
 	Headers map[string]string
 
@@ -20,11 +24,12 @@ type ResponseWriter struct {
 	buf bytes.Buffer
 }
 
-func (rw *ResponseWriter) Write(b []byte) (int, error) {
+func (res *Response) Write(b []byte) (int, error) {
 	// TODO
 	return 0, nil
 }
 
+// Request represents a HTTP request sent to a server.
 type Request struct {
 	// Parsed out header fields
 	Method  string
@@ -39,6 +44,37 @@ type Request struct {
 	keepalive bool
 }
 
+// httpConn handles persistent HTTP connections.
+type httpConn struct {
+	netConn net.Conn
+	handler Handler
+}
+
+// serve reads and responds to one or many HTTP requests off of a single
+// connection.
+func (hc *httpConn) serve() {
+	br := bufio.NewReader(hc.netConn)
+
+	for {
+		req, err := readRequest(br)
+		if err != nil {
+			// TODO: Send bad request
+			break
+		}
+
+		res := &Response{}
+
+		hc.handler.ServeHTTP(res, req)
+
+		// TODO: Send response back
+
+		if !req.keepalive {
+			break
+		}
+	}
+}
+
+// Server wraps a Handler and manages a network listener.
 type Server struct {
 	Handler Handler
 }
@@ -58,34 +94,6 @@ func (s *Server) Serve(l net.Listener) error {
 		go hc.serve()
 	}
 	return nil
-}
-
-type httpConn struct {
-	netConn net.Conn
-	handler Handler
-}
-
-// serve manages reading and writing to a connection.
-func (hc *httpConn) serve() {
-	br := bufio.NewReader(hc.netConn)
-
-	for {
-		req, err := readRequest(br)
-		if err != nil {
-			// TODO: Send bad request
-			break
-		}
-
-		res := &ResponseWriter{}
-
-		hc.handler.ServeHTTP(res, req)
-
-		// TODO: Send response back
-
-		if !req.keepalive {
-			break
-		}
-	}
 }
 
 func readRequest(r io.Reader) (*Request, error) {
