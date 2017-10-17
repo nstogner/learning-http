@@ -108,10 +108,10 @@ type httpConn struct {
 func (hc *httpConn) serve() {
 	defer hc.netConn.Close()
 
-	br := bufio.NewReader(hc.netConn)
+	buf := bufio.NewReader(hc.netConn)
 
 	for {
-		req, err := readRequest(br)
+		req, err := readRequest(buf)
 		if err != nil {
 			const bad = "HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n"
 			hc.netConn.Write([]byte(bad))

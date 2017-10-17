@@ -53,13 +53,13 @@ type httpConn struct {
 // serve reads and responds to one or many HTTP requests off of a single
 // connection.
 func (hc *httpConn) serve() {
-	br := bufio.NewReader(hc.netConn)
+	buf := bufio.NewReader(hc.netConn)
 
 	for {
-		req, err := readRequest(br)
+		req, err := readRequest(buf)
 		if err != nil {
 			// TODO: Send bad request
-			break
+			return
 		}
 
 		res := &Response{}
@@ -69,7 +69,7 @@ func (hc *httpConn) serve() {
 		// TODO: Send response back
 
 		if !req.keepalive {
-			break
+			return
 		}
 	}
 }

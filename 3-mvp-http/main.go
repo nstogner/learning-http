@@ -30,11 +30,11 @@ func main() {
 func serve(c net.Conn) {
 	defer c.Close()
 
-	r := bufio.NewReader(c)
+	buf := bufio.NewReader(c)
 
 	// Read request line
 	// e.g. "GET /abc HTTP/1.1"
-	ln0, err := r.ReadString('\n')
+	ln0, err := buf.ReadString('\n')
 	if err != nil {
 		return
 	}
@@ -43,7 +43,7 @@ func serve(c net.Conn) {
 	// Read headers
 	// e.g. "Content-Type: application/json"
 	for {
-		ln, err := r.ReadString('\n')
+		ln, err := buf.ReadString('\n')
 		if err != nil {
 			break
 		}

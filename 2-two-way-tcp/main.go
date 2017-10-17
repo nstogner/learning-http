@@ -36,12 +36,12 @@ func serve(c net.Conn) {
 
 	// The bufio Reader provides some nice convenience functions for reading
 	// up until a particular character is found
-	r := bufio.NewReader(c)
+	buf := bufio.NewReader(c)
 
 	for {
 		// Read up to and including the next newline character
 		// (the second byte of a crlf)
-		ln, err := r.ReadString('\n')
+		ln, err := buf.ReadString('\n')
 		if err != nil {
 			log.Println("unable to read from conn:", err)
 			break
