@@ -7,7 +7,7 @@ import (
 	stdhttp "net/http"
 	"testing"
 
-	"github.com/nstogner/learning-http/5-http-server-implementation/http"
+	"github.com/nstogner/learning-http/4-http-outline/http"
 )
 
 func TestServe(t *testing.T) {

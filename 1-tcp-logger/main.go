@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"log"
 	"net"
 )
@@ -31,18 +30,16 @@ func main() {
 func serve(c net.Conn) {
 	defer c.Close()
 
-	// The bufio Reader provides some nice convenience functions for reading
-	// up until a particular character is found
-	buf := bufio.NewReader(c)
+	// Create a buffer of length = 1.
+	// Try experimenting with different lengths.
+	buf := make([]byte, 1)
 
 	for {
-		// Read up to and including the next newline character
-		ln, err := buf.ReadString('\n')
-		if err != nil {
+		if _, err := c.Read(buf); err != nil {
 			log.Println("unable to read from conn:", err)
-			break
+			return
 		}
 
-		log.Printf("read line: %q", ln)
+		log.Printf("read: %q", string(buf))
 	}
 }

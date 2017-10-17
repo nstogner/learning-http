@@ -5,7 +5,7 @@ import (
 	"log"
 	"net"
 
-	"github.com/nstogner/learning-http/5-http-server-implementation/http"
+	"github.com/nstogner/learning-http/5-http-implementation/http"
 )
 
 func main() {

@@ -44,7 +44,7 @@ func serve(c net.Conn) {
 		ln, err := buf.ReadString('\n')
 		if err != nil {
 			log.Println("unable to read from conn:", err)
-			break
+			return
 		}
 
 		// NOTE: Telnet will send a crlf when you hit enter so we will strip
