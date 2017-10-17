@@ -15,10 +15,10 @@ func main() {
 	log.Print("listening")
 
 	for {
-		// Accept blocks until there is an incoming connection
+		// Accept blocks until there is an incoming connection.
 		conn, err := l.Accept()
 		if err != nil {
-			log.Print("unable to accept")
+			log.Println("unable to accept:", err)
 			break
 		}
 
@@ -40,6 +40,6 @@ func serve(c net.Conn) {
 			return
 		}
 
-		log.Printf("read: %q", string(buf))
+		log.Printf("buffer bits: %08b: %q", buf, buf)
 	}
 }
