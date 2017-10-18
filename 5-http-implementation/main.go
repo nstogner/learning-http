@@ -22,6 +22,7 @@ func main() {
 	}
 }
 
+// handler implements the http.Handler interface.
 type handler struct{}
 
 func (h handler) ServeHTTP(w *http.Response, r *http.Request) {

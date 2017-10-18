@@ -18,7 +18,7 @@ func main() {
 	for {
 		conn, err := l.Accept()
 		if err != nil {
-			log.Print("unable to accept")
+			log.Println("unable to accept", err)
 			break
 		}
 

@@ -2,7 +2,6 @@ package http
 
 import (
 	"bufio"
-	"bytes"
 	"io"
 	"net"
 )
@@ -20,8 +19,7 @@ type Response struct {
 	Headers map[string]string
 
 	// We know we need a buffer because we need to know what the Content-Length
-	// header should be before we can write the body to the connection
-	buf bytes.Buffer
+	// header should be before we can write the body to the connection buf bytes.Buffer
 }
 
 func (res *Response) Write(b []byte) (int, error) {
@@ -53,6 +51,8 @@ type httpConn struct {
 // serve reads and responds to one or many HTTP requests off of a single
 // connection.
 func (hc *httpConn) serve() {
+	defer hc.netConn.Close()
+
 	buf := bufio.NewReader(hc.netConn)
 
 	for {

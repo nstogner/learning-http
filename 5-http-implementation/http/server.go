@@ -13,6 +13,7 @@ import (
 
 const (
 	http10 = "HTTP/1.0"
+	http11 = "HTTP/1.1"
 )
 
 // statusTitles map HTTP status codes to their titles. This is handy for
@@ -93,8 +94,25 @@ type Request struct {
 	Headers map[string]string
 
 	Body io.Reader
+}
 
-	keepalive bool
+// parseConnection determines whether a connection should be kept alive and
+// whether the connection header should be echoed in the response.
+func (req *Request) parseConnection() (bool, bool) {
+	conn := strings.ToLower(req.Headers["connection"])
+
+	switch req.Proto {
+	case http10:
+		if conn == "keep-alive" {
+			return true, true
+		}
+	case http11:
+		if conn == "close" {
+			return false, true
+		}
+	}
+
+	return false, false
 }
 
 // httpConn handles persistent HTTP connections.
@@ -124,13 +142,19 @@ func (hc *httpConn) serve() {
 			proto:   req.Proto,
 		}
 
+		// Determine if connection should be closed after request.
+		keepalive, echo := req.parseConnection()
+		if echo {
+			res.Headers["Connection"] = req.Headers["connection"]
+		}
+
 		hc.handler.ServeHTTP(&res, req)
 
 		if err := res.writeTo(hc.netConn); err != nil {
 			return
 		}
 
-		if !req.keepalive {
+		if !keepalive {
 			return
 		}
 	}
@@ -198,27 +222,7 @@ func readRequest(buf *bufio.Reader) (*Request, error) {
 	}
 	req.Body = &io.LimitedReader{R: buf, N: cl}
 
-	// Determine if connection should be closed after request.
-	req.keepalive = shouldKeepAlive(req.Proto, req.Headers["connection"])
-
 	return &req, nil
-}
-
-// shouldKeepAlive determines whether a connection should be kept alive or
-// closed based on the protocol version and "Connection" header.
-func shouldKeepAlive(proto, connHeader string) bool {
-	switch proto {
-	case http10:
-		if connHeader == "keep-alive" {
-			return true
-		}
-		return false
-	default:
-		if connHeader == "close" {
-			return false
-		}
-		return true
-	}
 }
 
 // parseRequestLine attempts to parse the initial line of an HTTP request.
