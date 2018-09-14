@@ -5,7 +5,6 @@ import (
 	"io"
 	"log"
 	"net"
-	"os"
 	"strings"
 )
 
@@ -59,11 +58,10 @@ func serve(c net.Conn) {
 func handle(w io.Writer, cmd string) {
 	switch cmd {
 	case "BEEP":
-		log.Print("beeping!")
-		os.Stdout.Write([]byte("\u0007"))
-
+		log.Print("beep! beep!")
 		w.Write([]byte("ACCEPTED\r\n"))
 	default:
+		log.Printf("invalid command: %q", cmd)
 		w.Write([]byte("REJECTED\r\n"))
 	}
 }
