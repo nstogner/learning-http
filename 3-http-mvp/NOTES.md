@@ -12,9 +12,9 @@
 
 | Line            | Example                 | Format                       |
 |-----------------|-------------------------|------------------------------|
-| Request Line    | "GET /abc HTTP/1.1"     | "<method> <path> <protocol>" |
-| Headers         | "Host: www.example.com" | "<key>: <value>"             |
-| Empty Line      | ""                      | ""                           |
+| Request Line    | "GET /abc HTTP/1.1"     | `<method> <path> <protocol>` |
+| Headers         | "Host: www.example.com" | `<key>: <value>`             |
+| Empty Line      | ""                      | N/A                          |
 | Body (Optional) | "Hello!"                | N/A                          |
 
 We can parse this structure using the following logic:
