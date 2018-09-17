@@ -10,6 +10,8 @@
 
 # Request Structure
 
+| Line            | Example                 | Format                       |
+|-----------------|-------------------------|------------------------------|
 | Request Line    | "GET /abc HTTP/1.1"     | "<method> <path> <protocol>" |
 | Headers         | "Host: www.example.com" | "<key>: <value>"             |
 | Empty Line      | ""                      | ""                           |
