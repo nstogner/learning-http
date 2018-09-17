@@ -12,5 +12,5 @@ telnet localhost 7000
 Hey there server!<enter>
 ```
 
-Note what is logged in the server. Telnet sends a carriage return `\r` and a newline feed `\n` (usually referred to as CRLF online).
+Note what is logged in the server. The `telnet` tool sends a carriage return `\r` and a newline feed `\n` (usually referred to as CRLF online).
 
