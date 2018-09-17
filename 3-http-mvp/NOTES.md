@@ -13,9 +13,9 @@
 | Line            | Example                 | Format                       |
 |-----------------|-------------------------|------------------------------|
 | Request Line    | "GET /abc HTTP/1.1"     | `<method> <path> <protocol>` |
-| Headers         | "Host: www.example.com" | `<key>: <value>`             |
+| Header(s)       | "Host: www.example.com" | `<key>: <value>`             |
 | Empty Line      | ""                      | N/A                          |
-| Body (Optional) | "Hello!"                | N/A                          |
+| Body (Optional) | "Hello from client!"    | N/A                          |
 
 We can parse this structure using the following logic:
 
@@ -34,7 +34,6 @@ split[2] = Protocol
 ```
 split[0] = Header key
 split[1] = Header value
-
 ```
 
 Note: HTTP allows for duplicates of the same header keys. This is why Go stores headers as: `map[string][]string` rather than `map[string]string`.
@@ -42,4 +41,13 @@ Note: HTTP allows for duplicates of the same header keys. This is why Go stores 
 3. When a empty line is encountered, we know we have reached the end of the headers.
 
 4. Body: TODO
+
+# Response Structure
+
+| Line            | Example                               | Format                                   |
+|-----------------|---------------------------------------|------------------------------------------|
+| Response Line   | "HTTP/1.1 200 OK"                     | `<protocol> <status-code> <status-text>` |
+| Header(s)       | "Date: Mon, 23 May 2005 22:38:34 GMT" | `<key>: <value>`                         |
+| Empty Line      | ""                                    | N/A                                      |
+| Body (Optional) | "Hello from server!"                  | N/A                                      |
 
