@@ -5,7 +5,7 @@ What is TCP?
 - Stands for Transmission Control Protocol
 - Allows for the transfer of data (bytes of information) across the network
 - Has the concept of a connection between a client and a server
-- It protects against data corruption by using checksums of the data that get sent
+- It protects against data corruption by using checksums of the data that gets sent
 
 What is `telnet`?
 
