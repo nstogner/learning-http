@@ -7,6 +7,7 @@
   - Also called: Internet protocol suite
   - Also called: DoD (Department of Defense) Model (Development was funded by US government: DARPA)
 
+```
 | OSI Model             | TCP/IP Model            | Protocol |
 |-----------------------|-------------------------|----------|
 | 7. Application Layer  |                         | HTTP     |
@@ -20,6 +21,7 @@
 | 2. Data Link Layer    |                         |          |
 | 1. Physical Layer     | 1. Network Access Layer |          |
 |-----------------------|-------------------------|----------|
+```
 
 NOTES:
 
