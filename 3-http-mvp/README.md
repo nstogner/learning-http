@@ -36,7 +36,7 @@ split[1] = Path
 split[2] = Protocol
 ```
 
-2. For each line following (that isnt empty), split on `:` a maximum of 2 times:
+2. For each line following (that isnt empty), split on the first `:` (max length of 2):
 
 ```
 split[0] = Header key
