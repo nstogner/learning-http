@@ -1,5 +1,56 @@
 # 1. Reading from a TCP connection
 
+## Networking Layers
+
+- OSI Model (7-layer) (Open Systems Interconnection)
+- TCP/IP Model (4-layer)
+  - Also called: Internet protocol suite
+  - Also called: DoD (Department of Defense) Model (Development was funded by US government: DARPA)
+
+| OSI Model             | TCP/IP Model            | Protocol |
+|-----------------------|-------------------------|----------|
+| 7. Application Layer  |                         | HTTP     |
+| 6. Presentation Layer | 4. Application Layer    |          |
+| 5. Session Layer      |                         |          |
+|-----------------------|-------------------------|----------|
+| 4. Transport Layer    | 3. Transport Layer      | TCP      |
+|-----------------------|-------------------------|----------|
+| 3. Network Layer      | 2. Internet Layer       |          |
+|-----------------------|-------------------------|----------|
+| 2. Data Link Layer    |                         |          |
+| 1. Physical Layer     | 1. Network Access Layer |          |
+|-----------------------|-------------------------|----------|
+
+NOTES:
+
+- Usually when people refer to a layer by number, they are using the OSI model
+- Usually TCP/IP layers are referred to by name
+- Nobody talks about layer 5-6 in the OSI model
+- When someone says its a layer 8 problem they are probably insulting you (i.e. user error)
+- Some protocols dont neatly fit into a given layer (i.e. TCP in layer 4, but it also deals with layer 5 "Session Layer")
+
+## What is TCP?
+
+- Stands for Transmission Control Protocol
+- Has the concept of a connection between a client and a server
+- Handles control flow
+- Allows for the reliable transfer of data (bytes of information) across the network
+- It protects against data corruption by using checksums of the data that gets sent
+
+How does it relate to UDP?
+
+- Stand for User Datagram Protocol
+- Also checksums data to provide data integrity
+- Does not redeliver dropped packets
+
+What is `telnet`?
+
+- When referring to `telnet` here, we are talking about the CLI tool we will be using to establish a TCP connection
+- There is a `telnet` text-based protocol, but we are just using the tool to send text over TCP
+
+
+## Code
+
 This simple server listens for TCP connections and logs anything that is sent to it before closing the connection to the client.
 
 ```sh
@@ -13,4 +64,3 @@ Hey there server!<enter>
 ```
 
 Note what is logged in the server. The `telnet` tool sends a carriage return `\r` and a newline feed `\n` (usually referred to as CRLF online).
-
