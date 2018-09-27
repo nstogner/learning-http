@@ -19,7 +19,7 @@ HTTP Protocol
 
 | Line            | Example                 | Format                       |
 |-----------------|-------------------------|------------------------------|
-| Request Line    | `GET /abc HTTP/1.1`     | `<method> <path> <protocol>` |
+| Request Line    | `GET /users HTTP/1.1`   | `<method> <path> <protocol>` |
 | Header(s)       | `Host: www.example.com` | `<key>: <value>`             |
 | Empty Line      | ``                      | N/A                          |
 | Body (Optional) | `Hello from client!`    | N/A                          |
