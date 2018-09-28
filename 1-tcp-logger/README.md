@@ -36,22 +36,24 @@ NOTES:
 - Stands for Transmission Control Protocol
 - Has the concept of a connection between a client and a server
 - Handles control flow (it tries not to send more data than the receiver can handle)
+- Handles congestion control (using a slow-start algorithm)
 - Allows for the reliable transfer of data (bytes of information) across the network
 - It protects against data corruption by using checksums of the data that gets sent
 
-How does it relate to UDP?
+Side Note: How does it relate to UDP?
 
-- Stand for User Datagram Protocol
-- Also checksums data to provide data integrity
-- Does not redeliver dropped packets
+- UDP stands for User Datagram Protocol
+- UDP also checksums data to provide data integrity
+- UDP does not redeliver dropped packets
 
 ## Tools
 
 What is `telnet`?
 
-- When referring to `telnet` here, we are talking about the CLI tool we will be using to establish a TCP connection
-- There is a `telnet` text-based protocol, but we are just using the tool to send text over TCP
-
+- When referring to `telnet` here, we are talking about the CLI tool
+- There is a `telnet` text-based protocol
+- We will use `telnet` to make TCP connections and send text over them 
+- When we press <enter> `telnet` will send what we typed followed by two bytes: `\r\n`
 
 ## Code
 

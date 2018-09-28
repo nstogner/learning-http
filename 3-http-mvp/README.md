@@ -5,17 +5,24 @@
 - In terms of networking, a protocol is just a set of rules that endpoints use to communicate
 - These rules specify the manner in which data is sent and formatted
 
-HTTP Protocol
+## HTTP Protocol
 
-- There are multiple versions of HTTP
-- A HTTP 1.0/1.1 request is nothing more than a few lines of text. (We will focus on 1.0 b/c it is simpler)
-- HTTP 2.0 is a binary format (We will not touch on this)
-- For each HTTP request, there is a single HTTP response
+- Is a request-response protocol
+
+### Versions
+
+- There are multiple versions of the HTTP protocol
+- HTTP 1.0 & 1.1 are text based (ASCII)
+- HTTP 2.0 is a binary format (We will not touch on this here)
+- We will focus on 1.X
 - The structure of an HTTP 1.0 request and response is defined by [RFC 1945](https://tools.ietf.org/html/rfc1945)
 - [Wikipedia](https://en.wikipedia.org/wiki/Hypertext_Transfer_Protocol) has a good example
-- Each line is seperated by a Carraige Return byte (CR = `\r`) followed by a Line Feed byte (LF = `\n`)
 
-## Request Structure
+### Request Structure
+
+- A request consists of multiple lines of text
+- Each line is seperated by a Carraige Return byte (CR = `\r`) followed by a Line Feed byte (LF = `\n`)
+- CR & LF bytes are called "control characters" (They are not intended to be printed)
 
 | Line            | Example                 | Format                       |
 |-----------------|-------------------------|------------------------------|
@@ -24,7 +31,14 @@ HTTP Protocol
 | Empty Line      | ``                      | N/A                          |
 | Body (Optional) | `Hello from client!`    | N/A                          |
 
-We can parse this structure using the following logic:
+#### Request Data
+
+- Method: Can be thought of as a verb that indicates what action should be taked on a resource
+- Path: Identified a resource within the server which to act on
+- Protocol: Used to specifying the version `HTTP/1.0`, `HTTP/1.1`
+- Headers: Key-value pairs which specify metadata about the request
+
+#### Parsing Logic
 
 With a line determined by: everything read up to the CRLF (`\r\n`)...
 
@@ -49,7 +63,7 @@ Note: HTTP allows for duplicates of the same header keys. This is why Go stores 
 
 4. Body: TODO
 
-## Response Structure
+### Response Structure
 
 | Line            | Example                               | Format                                   |
 |-----------------|---------------------------------------|------------------------------------------|
