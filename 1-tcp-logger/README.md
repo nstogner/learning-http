@@ -27,15 +27,15 @@ NOTES:
 
 - Usually when people refer to a layer by number, they are using the OSI model
 - Usually TCP/IP layers are referred to by name
-- Nobody talks about layer 5-6 in the OSI model
-- When someone says its a layer 8 problem they are probably insulting you (i.e. user error)
 - Some protocols dont neatly fit into a given layer (i.e. TCP in layer 4, but it also deals with layer 5 "Session Layer")
+
+**We are going to build out a library that implements the HTTP protocol using the abstractions provided by TCP.**
 
 ## What is TCP?
 
 - Stands for Transmission Control Protocol
 - Has the concept of a connection between a client and a server
-- Handles control flow
+- Handles control flow (it tries not to send more data than the receiver can handle)
 - Allows for the reliable transfer of data (bytes of information) across the network
 - It protects against data corruption by using checksums of the data that gets sent
 
@@ -44,6 +44,8 @@ How does it relate to UDP?
 - Stand for User Datagram Protocol
 - Also checksums data to provide data integrity
 - Does not redeliver dropped packets
+
+## Tools
 
 What is `telnet`?
 
